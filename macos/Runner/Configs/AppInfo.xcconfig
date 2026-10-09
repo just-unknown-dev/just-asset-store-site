@@ -8,7 +8,7 @@
 PRODUCT_NAME = just_asset_store
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.justunknown.justAssetStore
+PRODUCT_BUNDLE_IDENTIFIER = com.justunknown.justassetstore
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.justunknown. All rights reserved.

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.justunknown.just_asset_store"
+    namespace = "com.justunknown.justassetstore"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.justunknown.just_asset_store"
+        applicationId = "com.justunknown.justassetstore"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
