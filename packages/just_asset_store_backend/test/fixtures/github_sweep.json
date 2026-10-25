@@ -1,0 +1,57 @@
+{
+  "_written": "By hand from GitHub's GraphQL docs (nodes(ids:), Repository, NOT_FOUND errors); refresh with a token when one is at hand.",
+  "data": {
+    "nodes": [
+      {
+        "databaseId": 101,
+        "nameWithOwner": "alice/knight",
+        "isPrivate": false,
+        "owner": {
+          "databaseId": 5001
+        },
+        "releases": {
+          "nodes": [
+            {
+              "databaseId": 9002,
+              "tagName": "v1.1.0",
+              "isDraft": false
+            },
+            {
+              "databaseId": 9001,
+              "tagName": "v1.0.0",
+              "isDraft": false
+            }
+          ]
+        }
+      },
+      null,
+      {
+        "databaseId": 103,
+        "nameWithOwner": "carol/drafts",
+        "isPrivate": false,
+        "owner": {
+          "databaseId": 5003
+        },
+        "releases": {
+          "nodes": [
+            {
+              "databaseId": 9100,
+              "tagName": "v0.1.0",
+              "isDraft": true
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "errors": [
+    {
+      "type": "NOT_FOUND",
+      "path": [
+        "nodes",
+        1
+      ],
+      "message": "Could not resolve to a node with the global id of 'R_gone'."
+    }
+  ]
+}

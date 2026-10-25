@@ -1,0 +1,32 @@
+{
+  "id": 419735650,
+  "node_id": "RE_kwDODKw3uc4ZBKhi",
+  "tag_name": "v2.103.0",
+  "name": "GitHub CLI 2.103.0",
+  "draft": false,
+  "prerelease": false,
+  "immutable": true,
+  "created_at": "2026-10-21T15:08:28Z",
+  "published_at": "2026-10-21T15:33:31Z",
+  "_recorded": "GET https://api.github.com/repos/cli/cli/releases/latest on 2026-10-23, trimmed to the fields the backend reads and two assets.",
+  "assets": [
+    {
+      "id": 662956296,
+      "name": "gh_2.103.0_checksums.txt",
+      "size": 1971,
+      "digest": "sha256:075bb954e2b113d0d2ac788d318b516280cb87103e601e788c34f3557acb15df",
+      "state": "uploaded",
+      "content_type": "text/plain; charset=utf-8",
+      "browser_download_url": "https://github.com/cli/cli/releases/download/v2.103.0/gh_2.103.0_checksums.txt"
+    },
+    {
+      "id": 662956297,
+      "name": "gh_2.103.0_linux_386.deb",
+      "size": 14146128,
+      "digest": "sha256:ae3270d7c3131f7048fa94427667eeab7ab1b75f47eb863cbc6b54382922c6c5",
+      "state": "uploaded",
+      "content_type": "application/x-debian-package",
+      "browser_download_url": "https://github.com/cli/cli/releases/download/v2.103.0/gh_2.103.0_linux_386.deb"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+# Miscellaneous
+*.log
+.DS_Store
+.idea/
+*.iml
+
+# Dart. pubspec.lock is committed: the workflows install exactly what it
+# names (`--enforce-lockfile`). Make it without pubspec_overrides.yaml, once
+# the store's packages are on pub.dev (README, "Setting it up").
+.dart_tool/
+/build/
+
+# Local path overrides for development in the monorepo.
+pubspec_overrides.yaml
+
+# A local --memory store and its identities.
+/store.json
+/ids.json
+
+# Firebase
+.firebase/
+.firebaserc

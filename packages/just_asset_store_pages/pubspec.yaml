@@ -1,0 +1,20 @@
+name: just_asset_store_pages
+description: "The Just Asset Store website's static pages, built from the catalog in pure Dart, and the words, links and routes the publish app shares with them."
+version: 0.1.0
+publish_to: none
+repository: https://github.com/just-unknown-dev/just-asset-store-site/tree/main/packages/just_asset_store_pages
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  # From pub.dev; for development, the engine workspace's working copies
+  # are used instead, through the gitignored pubspec_overrides.yaml.
+  just_asset_store: ^0.2.0
+  just_unknown_site:
+    path: ../just_unknown_site
+  args: ^2.7.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

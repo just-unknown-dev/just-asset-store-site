@@ -1,0 +1,117 @@
+# A maintainer's decision, as a comment on any issue (a report, a review):
+#
+#   /store block <id>              /store unblock <id>
+#   /store block:<version> <id>    /store unblock:<version> <id>
+#   /store yank:<version> <id>     /store unyank:<version> <id>
+#   /store trust:<official|verified|community> <id>
+#   /store approve <id>            /store reject <id>
+#
+# Only comments by the numeric GitHub ids in the MAINTAINER_IDS variable
+# (a JSON list) start the job — before any credentials are made — and the
+# backend checks its own list too. A decision that changes the catalog
+# starts Publish, which deploys it.
+name: Moderate
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write # to start Publish
+  contents: read
+  issues: write
+  id-token: write
+
+# Shared with Publish, so the two never write the records at once.
+concurrency:
+  group: store-records
+  cancel-in-progress: false
+
+env:
+  DART_VERSION: '3.13.5'
+  BACKEND: packages/just_asset_store_backend
+
+jobs:
+  moderate:
+    if: >-
+      startsWith(github.event.comment.body, '/store ') &&
+      contains(fromJSON(vars.MAINTAINER_IDS || '[]'), github.event.comment.user.id)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Read the command
+        id: cmd
+        env:
+          BODY: ${{ github.event.comment.body }}
+        run: |
+          # Only this exact shape is acted on; anything else is ignored.
+          line=$(printf '%s' "$BODY" | head -n 1 | tr -d '\r')
+          v='[0-9][0-9A-Za-z.+-]*'
+          re="^/store (block|unblock|block:$v|unblock:$v|yank:$v|unyank:$v|trust:(official|verified|community)|approve|reject) ([a-z][a-z0-9_]*)$"
+          if [[ "$line" =~ $re ]]; then
+            echo "action=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "id=${BASH_REMATCH[3]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not a store command." && exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+
+      - id: backend-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.BACKEND }}/build/backend
+          key: backend-${{ env.DART_VERSION }}-${{ hashFiles('packages/just_asset_store_backend/lib/**', 'packages/just_asset_store_backend/bin/**', 'packages/just_asset_store_backend/pubspec.yaml', 'packages/just_asset_store_backend/pubspec.lock') }}
+
+      - name: Compile the backend
+        if: steps.backend-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ env.BACKEND }}
+        run: |
+          dart pub get --enforce-lockfile
+          dart compile exe bin/backend.dart -o build/backend
+
+      # Its own service account: it only reads and writes records.
+      - id: gcp
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_MODERATE_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Moderate
+        id: run
+        working-directory: ${{ env.BACKEND }}
+        env:
+          FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          ACTOR_ID: ${{ github.event.comment.user.id }}
+          ID: ${{ steps.cmd.outputs.id }}
+          ACTION: ${{ steps.cmd.outputs.action }}
+        run: |
+          set +e
+          ./build/backend moderate --id "$ID" --action "$ACTION" \
+            --actor-id "$ACTOR_ID" --json > "$RUNNER_TEMP/result.json"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Answer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          answer=$(jq -r '[.result.outcomes[]? | (if .ok then (if .held then "⏸️" else "✅" end) else "❌" end) + " " + .message] | join("\n\n")' \
+            "$RUNNER_TEMP/result.json" 2>/dev/null)
+          if [ -z "$answer" ]; then
+            answer="The store could not run the command. A maintainer will look at the run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
+          gh issue comment "$ISSUE" --body "$answer"
+
+      - name: Publish
+        if: steps.run.outputs.code == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish.yml --ref main

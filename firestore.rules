@@ -1,0 +1,115 @@
+rules_version = '2';
+
+// The store's records (items, publishers, the sweep's state) are written
+// only by the backend in GitHub Actions, as a service account — which these
+// rules don't govern — and nobody reads them here: the website, the editor
+// and `just` read the exported catalog from the website.
+//
+// What a browser may do, signed in with GitHub:
+// - file a submission in their own name, at most one every ten minutes, and
+//   read their own submissions to see the store's answer — in the store's
+//   first version, only Just Unknown's own account (mayPublish);
+// - file a report about an item, at most one every two minutes;
+// - read the store's notices to them (a release it refused, a version
+//   waiting for review), kept under their numeric GitHub id.
+// The backend looks a signer's GitHub account up itself; nothing a browser
+// writes names one.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedInWithGitHub() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'github.com';
+    }
+
+    // The store's first version lists only Just Unknown's own packages,
+    // published from the just-unknown-dev GitHub account (numeric id
+    // 262105023, as the backend's officialPublishers). To open publishing
+    // to everyone, return true here and set openPublishing in the
+    // backend's catalog.json.
+    function mayPublish() {
+      return request.auth.token.firebase.identities['github.com']
+        .hasAny(['262105023']);
+    }
+
+    // A tally of when someone last filed: written in the same batch as what
+    // it counts, at that very moment, and not sooner than [gap] after the
+    // last. The rules accept the filing only together with it.
+    function isTally(gap) {
+      return request.resource.data.keys().hasOnly(['lastAt'])
+        && request.resource.data.lastAt == request.time
+        && (resource == null || request.time > resource.data.lastAt + gap);
+    }
+
+    function tallied(collection) {
+      return getAfter(/databases/$(database)/documents/$(collection)/$(request.auth.uid))
+        .data.lastAt == request.time;
+    }
+
+    // A submission names a public GitHub repository; its category is the
+    // one its package's just_store.json names.
+    function isNewSubmission(d) {
+      return d.keys().hasOnly(['uid', 'repo', 'note', 'status', 'createdAt'])
+        && d.keys().hasAll(['uid', 'repo', 'status', 'createdAt'])
+        && d.uid == request.auth.uid
+        && d.status == 'pending'
+        && d.createdAt == request.time
+        && d.repo is string
+        && d.repo.size() <= 160
+        && d.repo.matches('https://github[.]com/[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}')
+        && (!('note' in d) || (d.note is string && d.note.size() <= 500));
+    }
+
+    function isNewReport(d) {
+      return d.keys().hasOnly(['uid', 'itemId', 'reason', 'text', 'status', 'createdAt'])
+        && d.keys().hasAll(['uid', 'itemId', 'reason', 'status', 'createdAt'])
+        && d.uid == request.auth.uid
+        && d.status == 'new'
+        && d.createdAt == request.time
+        && d.itemId is string
+        && d.itemId.matches('[a-z][a-z0-9_]{0,63}')
+        && d.reason in ['malware', 'stolen', 'broken', 'inappropriate', 'other']
+        && (!('text' in d) || (d.text is string && d.text.size() <= 2000));
+    }
+
+    match /submitters/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if signedInWithGitHub()
+        && mayPublish()
+        && request.auth.uid == uid
+        && isTally(duration.value(10, 'm'));
+    }
+
+    match /submissions/{id} {
+      allow create: if signedInWithGitHub()
+        && mayPublish()
+        && isNewSubmission(request.resource.data)
+        && tallied('submitters');
+      allow get, list: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+
+    match /reporters/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if signedInWithGitHub()
+        && request.auth.uid == uid
+        && isTally(duration.value(2, 'm'));
+    }
+
+    match /reports/{id} {
+      allow create: if signedInWithGitHub()
+        && isNewReport(request.resource.data)
+        && tallied('reporters');
+    }
+
+    // Kept under the GitHub id the backend found for a publisher; readable
+    // by whoever signed in with that GitHub account.
+    match /notices/{githubId} {
+      allow get: if signedInWithGitHub()
+        && githubId in request.auth.token.firebase.identities['github.com'];
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

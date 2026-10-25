@@ -1,0 +1,209 @@
+# The store's one deployer.
+#
+#   every hour (:17)  answer the website's submissions and reports, and
+#                     check every watched repository's new releases (one
+#                     GraphQL sweep)
+#   then, when the catalog changed (or its daily full export is due), or
+#   the website's code did: export the catalog in pieces with its card
+#   pictures, build the website around it, and deploy both to Cloudflare
+#   Pages.
+#
+# A quiet hour is one short job: a compiled backend from the cache, no
+# Flutter. On a private repository Actions minutes are counted per job,
+# rounded up, out of 2,000 a month.
+#
+# Needs (README, "Setting it up"): variables FIREBASE_PROJECT,
+# GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_SERVICE_ACCOUNT, CLOUDFLARE_ACCOUNT_ID,
+# CLOUDFLARE_PAGES_PROJECT; secrets CLOUDFLARE_API_TOKEN and
+# FIREBASE_OPTIONS_DART; labels report, review and publish-failed.
+name: Publish
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'web/**'
+      - 'packages/just_unknown_site/**'
+      - 'packages/just_unknown_design/**'
+      - 'packages/just_asset_store_pages/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Read every record (the export builds on the deployed catalog otherwise)
+        type: boolean
+        default: false
+      allow_shrink:
+        description: Deploy a catalog with far fewer items than the live one
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # workload identity: Firestore and Auth without a key
+  issues: write # reports and reviews become issues; so does a failed run
+
+concurrency:
+  group: store-records
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.47.6'
+  DART_VERSION: '3.13.5'
+  WRANGLER_VERSION: '4.152.0'
+  LIVE: https://store.justunknown.com
+  BACKEND: packages/just_asset_store_backend
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+
+      # The backend compiled once per change of its code, then reused.
+      - id: backend-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.BACKEND }}/build/backend
+          key: backend-${{ env.DART_VERSION }}-${{ hashFiles('packages/just_asset_store_backend/lib/**', 'packages/just_asset_store_backend/bin/**', 'packages/just_asset_store_backend/pubspec.yaml', 'packages/just_asset_store_backend/pubspec.lock') }}
+
+      - name: Compile the backend
+        if: steps.backend-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ env.BACKEND }}
+        run: |
+          dart pub get --enforce-lockfile
+          dart compile exe bin/backend.dart -o build/backend
+
+      - id: gcp
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Answer submissions and reports, check new releases
+        id: run
+        working-directory: ${{ env.BACKEND }}
+        env:
+          FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          ./build/backend run --json > "$RUNNER_TEMP/run.json"
+          jq -r '.result.outcomes[] | "\(if .ok then "ok" else "x " end) \(.message)"' "$RUNNER_TEMP/run.json"
+          deploy=$(jq -r '.result.deploy' "$RUNNER_TEMP/run.json")
+          if [ "$EVENT" != "schedule" ]; then deploy=true; fi
+          echo "deploy=$deploy" >> "$GITHUB_OUTPUT"
+
+      # Card pictures are kept between runs: each is made once.
+      - if: steps.run.outputs.deploy == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.BACKEND }}/build/thumbs
+          key: thumbs-${{ github.run_id }}
+          restore-keys: thumbs-
+
+      - name: Export the catalog
+        id: export
+        if: steps.run.outputs.deploy == 'true'
+        working-directory: ${{ env.BACKEND }}
+        env:
+          FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          FULL: ${{ inputs.full && '--full' || '' }}
+          SHRINK: ${{ inputs.allow_shrink && '--allow-shrink' || '' }}
+        run: |
+          ./build/backend export --out build/catalog --previous "$LIVE/index.json" \
+            --thumbs build/thumbs $FULL $SHRINK --json > "$RUNNER_TEMP/export.json"
+          jq -r '.result | "\(.items) items, \(.pieces) pieces, \(.keptPieces) kept; full: \(.full)"' "$RUNNER_TEMP/export.json"
+          {
+            echo "root=$(jq -r '.result.rootSha' "$RUNNER_TEMP/export.json")"
+            echo "since=$(jq -r '.result.startedMs' "$RUNNER_TEMP/export.json")"
+            echo "full=$(jq -r '.result.full' "$RUNNER_TEMP/export.json")"
+          } >> "$GITHUB_OUTPUT"
+
+      # The publish app (Flutter, for /publish and /me) is rebuilt only when
+      # its code changes.
+      - id: app-cache
+        if: steps.run.outputs.deploy == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build/app
+          key: app-${{ env.FLUTTER_VERSION }}-${{ hashFiles('lib/**', 'web/**', 'tool/**', 'pubspec.yaml', 'pubspec.lock', 'packages/just_unknown_site/lib/**', 'packages/just_unknown_design/lib/**', 'packages/just_unknown_design/assets/**', 'packages/just_asset_store_pages/lib/**') }}
+
+      - if: steps.run.outputs.deploy == 'true' && steps.app-cache.outputs.cache-hit != 'true'
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      # lib/firebase_options.dart is gitignored (it holds the apps' API keys).
+      - name: Build the publish app
+        if: steps.run.outputs.deploy == 'true' && steps.app-cache.outputs.cache-hit != 'true'
+        env:
+          FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
+        run: |
+          if [ -z "$FIREBASE_OPTIONS_DART" ]; then
+            echo "::error::Set the FIREBASE_OPTIONS_DART secret: sign-in needs the real options."
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_OPTIONS_DART" > lib/firebase_options.dart
+          flutter pub get --enforce-lockfile
+          dart run tool/build.dart --out build/app
+
+      - name: Build the website around the catalog
+        if: steps.run.outputs.deploy == 'true'
+        working-directory: packages/just_asset_store_pages
+        run: |
+          dart pub get --enforce-lockfile
+          dart run bin/pages.dart --catalog "../../$BACKEND/build/catalog" \
+            --app ../../build/app --out ../../build/site
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.run.outputs.deploy == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+        run: |
+          npx --yes "wrangler@$WRANGLER_VERSION" pages deploy build/site \
+            --project-name "$PROJECT" --branch main --commit-dirty=true
+
+      - name: Record the deploy
+        if: steps.run.outputs.deploy == 'true'
+        working-directory: ${{ env.BACKEND }}
+        env:
+          FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
+          ROOT: ${{ steps.export.outputs.root }}
+          SINCE: ${{ steps.export.outputs.since }}
+          FULL: ${{ steps.export.outputs.full == 'true' && '--full' || '' }}
+        run: ./build/backend exported --root "$ROOT" --since "$SINCE" $FULL
+
+      # One open issue for failures, commented on each time, so a broken
+      # store is noticed without a flood.
+      - name: Tell the maintainers
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          open=$(gh issue list --label publish-failed --state open --json number --jq '.[0].number')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "Failed again: $RUN"
+          else
+            gh issue create --label publish-failed --title "Publishing failed" \
+              --body "The Publish workflow failed: $RUN"
+          fi

@@ -1,0 +1,30 @@
+name: Report a package
+description: Tell the store's maintainers about a package that is harmful, broken, or not its publisher's to share.
+title: "Report: "
+labels: [report]
+body:
+  - type: input
+    id: package
+    attributes:
+      label: Package id
+      placeholder: studio_knight
+    validations:
+      required: true
+  - type: dropdown
+    id: reason
+    attributes:
+      label: What is wrong
+      options:
+        - It does something harmful (malware, data collection)
+        - It holds work that is not the publisher's (copyright)
+        - It does not work
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What you saw, and how to see it. Links help.
+    validations:
+      required: true

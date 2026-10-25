@@ -1,46 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080B17">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="just_asset_store">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>just_asset_store</title>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Just Asset Store">
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" href="assets/packages/just_unknown_design/assets/fonts/SpaceGrotesk-Bold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/packages/just_unknown_design/assets/fonts/Inter-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <script>try{if(localStorage.getItem('just_storage:theme_mode')==='light'){document.documentElement.classList.add('light')}}catch(e){}</script>
+  <style>/*SHELL_CSS*//*/SHELL_CSS*/</style>
+  <!--SEO_HEAD-->
+  <title>Just Asset Store</title>
+  <meta name="description" content="Art, genre kits, editor tools and project templates for the Just Game Engine.">
+  <!--/SEO_HEAD-->
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <div id="static-shell"><!--SEO_BODY--><!--/SEO_BODY--></div>
+  <script>
+    (function () {
+      function hide() {
+        var s = document.getElementById('static-shell');
+        if (!s) return;
+        window.__shellScrollY = window.scrollY || 0;
+        s.classList.add('is-hidden');
+        setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 220);
+      }
+      window.addEventListener('flutter-first-frame', hide, { once: true });
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

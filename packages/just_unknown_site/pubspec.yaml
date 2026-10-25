@@ -1,0 +1,12 @@
+name: just_unknown_site
+description: "The Just Unknown look for static pages, in pure Dart: the palette, the site chrome model, and the HTML, CSS, <head>, JSON-LD and sitemap builders. just_unknown_design draws the same chrome in Flutter."
+version: 0.1.0
+publish_to: none
+repository: https://github.com/just-unknown-dev/just-asset-store-site/tree/main/packages/just_unknown_site
+
+environment:
+  sdk: ^3.11.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

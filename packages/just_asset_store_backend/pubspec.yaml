@@ -1,0 +1,20 @@
+name: just_asset_store_backend
+description: "The Just Asset Store's backend: GitHub Actions that answer the website's submissions, check packages against their GitHub releases, keep Firestore up to date, and export the catalog the website is built from."
+version: 0.1.0
+publish_to: none
+repository: https://github.com/just-unknown-dev/just-asset-store/tree/main/packages/just_asset_store_backend
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  # From pub.dev; for development, the engine workspace's working copies
+  # are used instead, through the gitignored pubspec_overrides.yaml.
+  just_asset_store: ^0.2.0
+  just_core_cli: ^0.1.2
+  # Card pictures (pure Dart).
+  image: ^4.8.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

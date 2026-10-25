@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "source": {
+    "id": "just",
+    "name": "Just Asset Store",
+    "homepage": "https://store.justunknown.com/"
+  },
+  "generatedAt": "2026-10-09T00:00:00.000Z",
+  "categories": [
+    {"id": "characters", "label": "Characters", "order": 10},
+    {"id": "environments", "label": "Environments", "order": 20},
+    {"id": "tilesets", "label": "Tilesets", "order": 30},
+    {"id": "props", "label": "Props", "order": 40},
+    {"id": "effects", "label": "Effects", "order": 50},
+    {"id": "ui", "label": "Interface", "order": 60},
+    {"id": "audio", "label": "Sound & music", "order": 70},
+    {"id": "fonts", "label": "Fonts", "order": 80},
+    {"id": "kits", "label": "Genre kits", "order": 90},
+    {"id": "editors", "label": "Editor tools", "order": 100},
+    {"id": "templates", "label": "Project templates", "order": 110},
+    {"id": "libraries", "label": "Libraries", "order": 120},
+    {"id": "core", "label": "Core", "order": 130}
+  ],
+  "items": [
+    {
+      "id": "just_sprite_editor",
+      "name": "Sprite Studio",
+      "kind": "editor-extension",
+      "category": "editors",
+      "summary": "Draw and animate pixel-art sprites inside the editor.",
+      "description": "A pixel-art sprite editor and animator for just_game_engine_editor: layers, frames, tags and onion skin, and an animation state-machine graph the engine plays at runtime. It opens .jsprite files from the Assets dock and saves the sprite sheet and animator beside them.",
+      "tags": ["sprites", "pixel art", "animation", "animator"],
+      "author": {"name": "Just Unknown", "url": "https://justunknown.com"},
+      "license": {"spdx": "BSD-3-Clause"},
+      "publisher": "just-unknown-dev",
+      "trust": "official",
+      "sourceRepo": "https://github.com/just-unknown-dev/just-sprite-editor",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "published": "2026-10-09T00:00:00.000Z",
+          "archive": {
+            "url": "https://github.com/just-unknown-dev/just-sprite-editor/releases/download/v0.1.0/just_sprite_editor-0.1.0.zip",
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "size": 1
+          },
+          "requires": {"just_game_engine": "^2.0.0"},
+          "dependencies": {"just_game_engine_editor": "^0.1.0-dev.1"}
+        }
+      ]
+    },
+    {
+      "id": "just_input_editor",
+      "name": "Input Actions",
+      "kind": "editor-extension",
+      "category": "editors",
+      "summary": "Map keyboard, gamepad and touch input to your game's actions.",
+      "description": "The Input Actions editor for just_inputs: action maps, actions and their bindings; keyboard, gamepad and touch views; and a live test that lights up each action as you press it. It edits the project's game.input.json, which the game reads at startup.",
+      "tags": ["input", "gamepad", "touch", "controls"],
+      "author": {"name": "Just Unknown", "url": "https://justunknown.com"},
+      "license": {"spdx": "BSD-3-Clause"},
+      "publisher": "just-unknown-dev",
+      "trust": "official",
+      "sourceRepo": "https://github.com/just-unknown-dev/just-input-editor",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "published": "2026-10-09T00:00:00.000Z",
+          "archive": {
+            "url": "https://github.com/just-unknown-dev/just-input-editor/releases/download/v0.1.0/just_input_editor-0.1.0.zip",
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "size": 1
+          },
+          "requires": {"just_game_engine": "^2.0.0"},
+          "dependencies": {"just_game_engine_editor": "^0.1.0-dev.1"}
+        }
+      ]
+    },
+    {
+      "id": "just_ui_editor",
+      "name": "Interface",
+      "kind": "kit",
+      "category": "kits",
+      "summary": "In-game screens and HUDs, drawn as real Flutter widgets.",
+      "description": "In-game interface for just_game_engine: screens saved as .ui.json assets and drawn as real Flutter widgets, world-space text and buttons, themes, bindings and actions — and the editor that builds them. The runtime part ships in your game; the editor part stays out of release builds.",
+      "tags": ["ui", "hud", "menus", "screens"],
+      "author": {"name": "Just Unknown", "url": "https://justunknown.com"},
+      "license": {"spdx": "BSD-3-Clause"},
+      "publisher": "just-unknown-dev",
+      "trust": "official",
+      "sourceRepo": "https://github.com/just-unknown-dev/just-ui-editor",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "published": "2026-10-09T00:00:00.000Z",
+          "archive": {
+            "url": "https://github.com/just-unknown-dev/just-ui-editor/releases/download/v0.1.0/just_ui_editor-0.1.0.zip",
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "size": 1
+          },
+          "requires": {"just_game_engine": "^2.0.0"},
+          "dependencies": {"just_game_engine_editor": "^0.1.0-dev.1"}
+        }
+      ]
+    }
+  ]
+}

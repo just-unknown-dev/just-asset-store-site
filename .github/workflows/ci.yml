@@ -1,0 +1,124 @@
+# Analyze and test what changed. On a private repository every minute counts
+# against 2,000 a month: each job runs only for its own files, and a newer
+# push cancels a run still going.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.47.6'
+  DART_VERSION: '3.13.5'
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      site: ${{ steps.diff.outputs.site }}
+      backend: ${{ steps.diff.outputs.backend }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "$BASE" HEAD)
+          echo "$changed"
+          if echo "$changed" | grep -qvE '^packages/just_asset_store_backend/|^\.github/workflows/(publish|moderate|rules)\.yml$|^firestore\.'; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$changed" | grep -qE '^packages/just_asset_store_backend/|^firestore\.'; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # The Just Unknown look: the pure-Dart page kit and the Flutter design
+  # system on it. Neither needs the store's packages.
+  design:
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: just_unknown_site
+        working-directory: packages/just_unknown_site
+        run: |
+          dart pub get
+          dart analyze --fatal-infos
+          dart test
+      - name: just_unknown_design
+        working-directory: packages/just_unknown_design
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+
+  # The publish app and the static pages use just_asset_store from pub.dev,
+  # like the backend (see below).
+  site:
+    needs: changes
+    if: needs.changes.outputs.site == 'true' && vars.STORE_DEPS_PUBLISHED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: just_asset_store_pages
+        working-directory: packages/just_asset_store_pages
+        run: |
+          dart pub get --enforce-lockfile
+          dart analyze --fatal-infos
+          dart test
+      # Tests never touch Firebase: the placeholder options are enough.
+      - run: cp lib/firebase_options.dart.example lib/firebase_options.dart
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter analyze
+      - run: flutter test
+
+  # The backend needs just_asset_store 0.2.0 and just_core_cli 0.1.2 from
+  # pub.dev (just_asset_store has its own repository, and its own CI): set
+  # the repository variable STORE_DEPS_PUBLISHED to true once both are
+  # there, and the lockfiles made without pubspec_overrides.yaml (the
+  # app's, the pages package's and the backend's) are committed.
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' && vars.STORE_DEPS_PUBLISHED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/just_asset_store_backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+      - run: dart pub get --enforce-lockfile
+      - run: dart analyze --fatal-infos
+      - run: dart test

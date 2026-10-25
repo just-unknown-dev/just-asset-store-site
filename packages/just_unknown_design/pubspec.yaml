@@ -1,0 +1,51 @@
+name: just_unknown_design
+description: "The Just Unknown look for Flutter web sites: colours, type, tokens, the site chrome and cards, and the pure-Dart static SEO shell builder that matches them."
+version: 0.1.0
+publish_to: none
+repository: https://github.com/just-unknown-dev/just-asset-store/tree/main/packages/just_unknown_design
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # The palette, the chrome's model and the static page builders, in pure
+  # Dart.
+  just_unknown_site:
+    path: ../just_unknown_site
+  go_router: ^17.3.0
+  just_signals: ^1.0.2
+  just_storage: ^1.2.1
+  url_launcher: ^6.3.2
+  web: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/logo/
+
+  # Apps name these families through JuFonts (packages/just_unknown_design/…).
+  fonts:
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/SpaceGrotesk-Bold.ttf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+          weight: 400

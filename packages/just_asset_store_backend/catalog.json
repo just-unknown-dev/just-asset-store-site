@@ -1,0 +1,29 @@
+{
+  "source": {
+    "id": "just",
+    "name": "Just Asset Store",
+    "homepage": "https://store.justunknown.com/"
+  },
+  "site": "https://store.justunknown.com",
+  "backendRepo": "just-unknown-dev/just-asset-store-site",
+  "maintainerIds": [263049034],
+  "officialPublishers": [262105023],
+  "openPublishing": false,
+  "reservedPrefixes": ["just_"],
+  "featured": ["just_sprite_editor", "just_platformer_kit", "just_world_builder_kit"],
+  "categories": [
+    {"id": "characters", "label": "Characters", "order": 10},
+    {"id": "environments", "label": "Environments", "order": 20},
+    {"id": "tilesets", "label": "Tilesets", "order": 30},
+    {"id": "props", "label": "Props", "order": 40},
+    {"id": "effects", "label": "Effects", "order": 50},
+    {"id": "ui", "label": "Interface", "order": 60},
+    {"id": "audio", "label": "Sound & music", "order": 70},
+    {"id": "fonts", "label": "Fonts", "order": 80},
+    {"id": "kits", "label": "Genre kits", "order": 90},
+    {"id": "editors", "label": "Editor tools", "order": 100},
+    {"id": "templates", "label": "Project templates", "order": 110},
+    {"id": "libraries", "label": "Libraries", "order": 120},
+    {"id": "core", "label": "Core", "order": 130}
+  ]
+}

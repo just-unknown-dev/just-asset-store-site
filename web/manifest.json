@@ -1,12 +1,12 @@
 {
-    "name": "just_asset_store",
-    "short_name": "just_asset_store",
+    "name": "Just Asset Store",
+    "short_name": "Asset Store",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#080B17",
+    "theme_color": "#F5746F",
+    "description": "Art, genre kits, editor tools and project templates for the Just Game Engine.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

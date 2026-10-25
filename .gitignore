@@ -47,6 +47,9 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
+# Local path overrides for development in the monorepo.
+pubspec_overrides.yaml
+
 # Secrets — never commit these
 # Firebase / FlutterFire generated config
 **/google-services.json
