@@ -1,5 +1,5 @@
 name: just_asset_store_site
-description: "The Just Asset Store's publish app (store.justunknown.com/publish and /me): sign in with GitHub, submit a package, report one. The rest of the site is static pages (packages/just_asset_store_pages)."
+description: "The Just Asset Store's publish app (asset.justunknown.com/publish and /me): sign in with GitHub, submit a package, report one. The rest of the site is static pages (packages/just_asset_store_pages)."
 publish_to: 'none'
 version: 0.1.0+1
 

@@ -77,3 +77,6 @@ key.properties
 *.mobileprovision
 *.cer
 service-account*.json
+
+# Wrangler's local cache (Cloudflare account id, Pages project)
+.wrangler/

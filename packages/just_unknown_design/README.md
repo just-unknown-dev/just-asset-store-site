@@ -1,7 +1,7 @@
 # just_unknown_design
 
 The Just Unknown look for Flutter web sites, shared by
-[store.justunknown.com](https://store.justunknown.com) and (later)
+[asset.justunknown.com](https://asset.justunknown.com) and (later)
 [justunknown.com](https://justunknown.com), which it was taken from.
 
 - **Theme:** `JuTheme.dark()` / `JuTheme.light()` (Material 3), the `JuTokens`

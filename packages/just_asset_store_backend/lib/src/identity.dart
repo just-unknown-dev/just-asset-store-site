@@ -23,11 +23,17 @@ final class FirebaseIdentityLookup implements IdentityLookup {
   FirebaseIdentityLookup({
     required this.project,
     required this.accessToken,
+    this.quotaProject,
     HttpClient Function()? client,
   }) : _client = client ?? HttpClient.new;
 
   final String project;
   final String accessToken;
+
+  /// The project a person's own token bills its calls to
+  /// (`x-goog-user-project`): Identity Toolkit refuses a person's token
+  /// without one. Null for a service account.
+  final String? quotaProject;
   final HttpClient Function() _client;
 
   @override
@@ -43,9 +49,14 @@ final class FirebaseIdentityLookup implements IdentityLookup {
       request.headers
         ..set('Authorization', 'Bearer $accessToken')
         ..contentType = ContentType.json;
-      request.write(jsonEncode({
-        'localId': [uid],
-      }));
+      if (quotaProject case final quota?) {
+        request.headers.set('x-goog-user-project', quota);
+      }
+      request.write(
+        jsonEncode({
+          'localId': [uid],
+        }),
+      );
       final response = await request.close();
       final text = await utf8.decodeStream(response);
       if (response.statusCode != 200) {

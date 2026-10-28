@@ -271,7 +271,7 @@ void main() {
 
   test('sitemap, robots, headers and redirects', () {
     final sitemap = files['sitemap.xml']!;
-    expect(sitemap, contains('<loc>https://store.justunknown.com/items/their_kit</loc>'));
+    expect(sitemap, contains('<loc>https://asset.justunknown.com/items/their_kit</loc>'));
     expect(sitemap, contains('<lastmod>2026-10-10</lastmod>'));
     expect(sitemap, isNot(contains('bad_pack')));
     expect(files['robots.txt'], contains('Disallow: /me'));

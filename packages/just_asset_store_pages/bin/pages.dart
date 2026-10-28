@@ -2,7 +2,7 @@
 //
 //   dart run bin/pages.dart --catalog <folder with index.json>
 //       [--app <the publish app's build>] --out <folder>
-//       [--base-url https://store.justunknown.com]
+//       [--base-url https://asset.justunknown.com]
 //
 // Preview the result with `npx wrangler pages dev <out>`.
 import 'dart:io';

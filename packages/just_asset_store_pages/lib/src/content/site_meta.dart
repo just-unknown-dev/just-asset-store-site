@@ -8,7 +8,7 @@ import 'routes.dart';
 /// the publish app.
 abstract final class StoreMeta {
   static const String name = 'Just Asset Store';
-  static const String baseUrl = 'https://store.justunknown.com';
+  static const String baseUrl = 'https://asset.justunknown.com';
   static const String tagline =
       'Art, kits and editor tools for the Just Game Engine, installed with one '
       'command.';

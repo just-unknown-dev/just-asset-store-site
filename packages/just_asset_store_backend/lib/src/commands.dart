@@ -42,6 +42,14 @@ abstract class BackendCommand extends JustCommand {
     return project == null || token == null ? null : (project, token);
   }
 
+  /// `GOOGLE_CLOUD_QUOTA_PROJECT`: set when the backend runs by hand on a
+  /// person's `gcloud` token (tool/publish_local.dart), which Google bills to
+  /// a project named per call. The workflows' service account needs none.
+  String? get _quotaProject {
+    final quota = context.environment['GOOGLE_CLOUD_QUOTA_PROJECT'];
+    return quota == null || quota.isEmpty ? null : quota;
+  }
+
   /// GitHub, with the workflow's token.
   GitHubApi github() =>
       HttpGitHubApi(token: context.environment['GITHUB_TOKEN'] ?? '');
@@ -63,6 +71,7 @@ abstract class BackendCommand extends JustCommand {
       store = FirestoreDocumentStore(
         project: firebase.$1,
         accessToken: firebase.$2,
+        quotaProject: _quotaProject,
       );
     }
     final config = File(argResults!.option('config')!);
@@ -146,7 +155,11 @@ final class RunCommand extends BackendCommand {
         for (final e in json.entries) '${e.key}': e.value as int,
       });
     } else if (_firebase case (final project, final token)) {
-      identities = FirebaseIdentityLookup(project: project, accessToken: token);
+      identities = FirebaseIdentityLookup(
+        project: project,
+        accessToken: token,
+        quotaProject: _quotaProject,
+      );
     } else {
       throw const CommandFailure(
         'FIREBASE_PROJECT and GOOGLE_OAUTH_ACCESS_TOKEN are not set (or pass '
@@ -155,7 +168,9 @@ final class RunCommand extends BackendCommand {
     }
     final r = await b.run(identities: identities, limit: intOption('limit'));
     if (r.outcomes.isEmpty) output.line('Nothing happened.');
-    output.line(r.deploy ? 'The catalog changed.' : 'The catalog is as it was.');
+    output.line(
+      r.deploy ? 'The catalog changed.' : 'The catalog is as it was.',
+    );
     report(r.outcomes, extra: {'deploy': r.deploy});
     // A refused package is its publisher's to fix, not a failed run.
     return 0;
@@ -284,9 +299,12 @@ final class ExportCommand extends BackendCommand {
         previous = (await HttpStoreSource(uri).fetchIndex()).index;
         final text = utf8.decode((await fetcher.get(uri)).body);
         final json = JsonFields.parse(text);
-        if (CatalogRoot.isSplit(json)) previousRoot = CatalogRoot.fromJson(json);
+        if (CatalogRoot.isSplit(json))
+          previousRoot = CatalogRoot.fromJson(json);
       } on Object catch (e) {
-        output.warn('The deployed catalog could not be read ($e): reading every record.');
+        output.warn(
+          'The deployed catalog could not be read ($e): reading every record.',
+        );
         previous = null;
       }
     }
@@ -322,10 +340,7 @@ final class ExportCommand extends BackendCommand {
       liveSite: previousUrl == null ? null : Uri.parse(previousUrl),
     );
     Future<bool> publish(String path) async {
-      final bytes = await pictures.bytesOf(
-        path,
-        source: result.pictures[path],
-      );
+      final bytes = await pictures.bytesOf(path, source: result.pictures[path]);
       if (bytes == null) return false;
       write(path, bytes);
       return true;
@@ -335,7 +350,8 @@ final class ExportCommand extends BackendCommand {
     for (final item in result.index.items) {
       final json = item.toJson();
       final card = item.thumbnail;
-      if (card != null && (!card.startsWith('thumbs/') || !await publish(card))) {
+      if (card != null &&
+          (!card.startsWith('thumbs/') || !await publish(card))) {
         json.remove('thumbnail');
       }
       json['previews'] = [
@@ -377,7 +393,9 @@ final class ExportCommand extends BackendCommand {
       }
     }
 
-    final rootSha = Sha256.hexOf(Uint8List.fromList(utf8.encode(files.rootText)));
+    final rootSha = Sha256.hexOf(
+      Uint8List.fromList(utf8.encode(files.rootText)),
+    );
     for (final s in result.skipped) {
       output.warn('Left out: $s');
     }

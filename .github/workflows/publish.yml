@@ -1,5 +1,10 @@
 # The store's one deployer.
 #
+# By hand only for now. While only Just Unknown publishes (version 1), the
+# store is published from a computer with tool/publish_local.dart, which runs
+# these same steps. When publishing opens to everyone, uncomment the hourly
+# schedule and the push trigger below.
+#
 #   every hour (:17)  answer the website's submissions and reports, and
 #                     check every watched repository's new releases (one
 #                     GraphQL sweep)
@@ -19,18 +24,19 @@
 name: Publish
 
 on:
-  schedule:
-    - cron: '17 * * * *'
-  push:
-    branches: [main]
-    paths:
-      - 'lib/**'
-      - 'web/**'
-      - 'packages/just_unknown_site/**'
-      - 'packages/just_unknown_design/**'
-      - 'packages/just_asset_store_pages/**'
-      - 'pubspec.yaml'
-      - 'pubspec.lock'
+  # Off while the store is published by hand (tool/publish_local.dart).
+  # schedule:
+  #   - cron: '17 * * * *'
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'lib/**'
+  #     - 'web/**'
+  #     - 'packages/just_unknown_site/**'
+  #     - 'packages/just_unknown_design/**'
+  #     - 'packages/just_asset_store_pages/**'
+  #     - 'pubspec.yaml'
+  #     - 'pubspec.lock'
   workflow_dispatch:
     inputs:
       full:
@@ -55,7 +61,7 @@ env:
   FLUTTER_VERSION: '3.47.6'
   DART_VERSION: '3.13.5'
   WRANGLER_VERSION: '4.152.0'
-  LIVE: https://store.justunknown.com
+  LIVE: https://asset.justunknown.com
   BACKEND: packages/just_asset_store_backend
 
 jobs:
@@ -64,6 +70,29 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Names everything "Setting it up" (README, step 7) still has to add,
+      # before anything else runs.
+      - name: Check the repository's settings
+        env:
+          FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+          # Whether each secret is set, never its value.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && 'set' || '' }}
+          FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART != '' && 'set' || '' }}
+        run: |
+          missing=""
+          for name in FIREBASE_PROJECT GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT \
+              CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_PAGES_PROJECT CLOUDFLARE_API_TOKEN FIREBASE_OPTIONS_DART; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Not set yet (Settings > Secrets and variables > Actions):$missing"
+            exit 1
+          fi
 
       - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
@@ -200,6 +229,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          # gh refuses a label the repository doesn't have yet.
+          gh label create publish-failed --color B60205 \
+            --description "The Publish workflow failed" 2>/dev/null || true
           open=$(gh issue list --label publish-failed --state open --json number --jq '.[0].number')
           if [ -n "$open" ]; then
             gh issue comment "$open" --body "Failed again: $RUN"

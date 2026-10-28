@@ -1,7 +1,7 @@
 # Just Asset Store
 
 The Just Game Engine's Asset Store: the website at
-[store.justunknown.com](https://store.justunknown.com), the catalog it
+[asset.justunknown.com](https://asset.justunknown.com), the catalog it
 publishes, and the code that keeps them.
 
 | Path | What it is |
@@ -164,7 +164,7 @@ npx wrangler pages dev build/site                                  # serve it as
 3. **GitHub sign-in.** Create a GitHub OAuth App (callback
    `https://just-asset-store.firebaseapp.com/__/auth/handler`), and in
    Authentication > Sign-in method turn on GitHub with its client id and
-   secret. Add `store.justunknown.com` to the authorised domains.
+   secret. Add `asset.justunknown.com` to the authorised domains.
 4. **Service accounts**, each with no more than it needs:
    - Publish: *Cloud Datastore User* and *Firebase Authentication Viewer*;
    - Moderate: *Cloud Datastore User*;
@@ -174,8 +174,8 @@ npx wrangler pages dev build/site                                  # serve it as
    (`token.actions.githubusercontent.com`), limited to this repository,
    allowed to impersonate those accounts. No key file is stored anywhere.
 6. **Cloudflare.** A free account, and a Pages project (Direct Upload) named
-   for example `just-asset-store`; an API token with *Cloudflare Pages:
-   Edit*. Add the custom domain `store.justunknown.com` to the project (a
+   `just-asset-store-site`; an API token with *Cloudflare Pages:
+   Edit*. Add the custom domain `asset.justunknown.com` to the project (a
    CNAME to `<project>.pages.dev`; the DNS can stay where it is): the
    address `SourceConfig.official` reads the catalog from.
 7. **Repository settings** (Settings > Secrets and variables > Actions):
@@ -214,10 +214,20 @@ that an unknown path answers 404, that `/index.json` answers 304 to a
 request with its ETag, and that signing in on `/publish` works. Sign-in
 opens a pop-up on `just-asset-store.firebaseapp.com`; if a browser blocks
 its third-party storage, serve Firebase's `/__/auth/*` from
-`store.justunknown.com` (a Pages Function proxying to the firebaseapp.com
+`asset.justunknown.com` (a Pages Function proxying to the firebaseapp.com
 handler) and set `authDomain` to it.
 
 ## Before community submissions open
+
+- Turn the workflows back on. For now the store is published by hand from
+  a computer: `dart tool/publish_local.dart` runs the Publish workflow's
+  steps with your own gcloud, wrangler and GitHub logins, and `.env` holds
+  `GITHUB_TOKEN` and `CLOUDFLARE_PAGES_PROJECT=just-asset-store-site`;
+  `--rules` deploys the Firestore rules and indexes. The Publish and
+  Firestore rules workflows run only by hand, so other publishers'
+  submissions would wait. Do "Setting it up" steps 4, 5 and 7, then
+  uncomment the hourly schedule and push trigger in `publish.yml` and the
+  push trigger in `rules.yml`.
 
 - Review the content policy
   (`packages/just_asset_store_pages/lib/src/content/copy.dart`,

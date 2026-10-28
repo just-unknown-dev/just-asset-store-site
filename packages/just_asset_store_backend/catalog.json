@@ -2,9 +2,9 @@
   "source": {
     "id": "just",
     "name": "Just Asset Store",
-    "homepage": "https://store.justunknown.com/"
+    "homepage": "https://asset.justunknown.com/"
   },
-  "site": "https://store.justunknown.com",
+  "site": "https://asset.justunknown.com",
   "backendRepo": "just-unknown-dev/just-asset-store-site",
   "maintainerIds": [263049034],
   "officialPublishers": [262105023],

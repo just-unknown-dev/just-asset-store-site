@@ -1,14 +1,17 @@
 # Firestore's rules and indexes, deployed when they change on main (and
 # by hand). Its own service account: Firebase Rules Admin and Cloud
 # Datastore Index Admin, nothing else.
+#
+# By hand only for now: `dart tool/publish_local.dart --rules` deploys them
+# from a computer. Uncomment the push trigger when publishing opens.
 name: Firestore rules
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - firestore.rules
-      - firestore.indexes.json
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - firestore.rules
+  #     - firestore.indexes.json
   workflow_dispatch:
 
 permissions:
@@ -24,6 +27,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check the repository's settings
+        env:
+          FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_RULES_SERVICE_ACCOUNT: ${{ vars.GCP_RULES_SERVICE_ACCOUNT }}
+        run: |
+          missing=""
+          for name in FIREBASE_PROJECT GCP_WORKLOAD_IDENTITY_PROVIDER GCP_RULES_SERVICE_ACCOUNT; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Not set yet (Settings > Secrets and variables > Actions):$missing"
+            exit 1
+          fi
 
       # Writes a credentials file firebase-tools reads (no key stored).
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0

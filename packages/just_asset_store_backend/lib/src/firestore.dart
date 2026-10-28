@@ -19,6 +19,7 @@ final class FirestoreDocumentStore implements DocumentStore {
   FirestoreDocumentStore({
     required this.project,
     required this.accessToken,
+    this.quotaProject,
     Uri? endpoint,
     HttpClient Function()? client,
   }) : endpoint = endpoint ?? Uri.https('firestore.googleapis.com'),
@@ -29,6 +30,11 @@ final class FirestoreDocumentStore implements DocumentStore {
 
   /// The OAuth access token.
   final String accessToken;
+
+  /// The project a person's own token bills its calls to
+  /// (`x-goog-user-project`), when run by hand with `gcloud` credentials
+  /// rather than a service account; null in the workflows.
+  final String? quotaProject;
 
   /// Where Firestore's REST API is.
   final Uri endpoint;
@@ -64,7 +70,9 @@ final class FirestoreDocumentStore implements DocumentStore {
         'updateMask.fieldPaths': fields.keys.toList(),
         'currentDocument.exists': 'true',
       }),
-      {'fields': {for (final e in fields.entries) e.key: _value(e.value)}},
+      {
+        'fields': {for (final e in fields.entries) e.key: _value(e.value)},
+      },
     );
     _ok(status, body, 'update $path');
   }
@@ -160,6 +168,9 @@ final class FirestoreDocumentStore implements DocumentStore {
     try {
       final request = await client.openUrl(method, uri);
       request.headers.set('Authorization', 'Bearer $accessToken');
+      if (quotaProject case final quota?) {
+        request.headers.set('x-goog-user-project', quota);
+      }
       if (body != null) {
         request.headers.contentType = ContentType.json;
         request.write(jsonEncode(body));
