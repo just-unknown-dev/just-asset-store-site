@@ -27,6 +27,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # no GitHub token left on disk for npx tools
 
       - name: Check the repository's settings
         env:
@@ -50,7 +52,9 @@ jobs:
           service_account: ${{ vars.GCP_RULES_SERVICE_ACCOUNT }}
 
       - name: Deploy
+        env:
+          FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
         run: >-
           npx --yes "firebase-tools@$FIREBASE_TOOLS_VERSION" deploy
           --only firestore:rules,firestore:indexes
-          --project "${{ vars.FIREBASE_PROJECT }}" --non-interactive
+          --project "$FIREBASE_PROJECT" --non-interactive
