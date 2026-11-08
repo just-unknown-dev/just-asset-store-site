@@ -52,7 +52,7 @@ final class HttpPubDevApi implements PubDevApi {
       _asked[package] ??= _versions(package);
 
   Future<List<PubVersion>?> _versions(String package) async {
-    if (!StoreNames.isId(package)) return null;
+    if (!PackageNames.isId(package)) return null;
     final FetchResponse response;
     try {
       response = await _fetcher.get(

@@ -10,7 +10,7 @@ environment:
 dependencies:
   # From pub.dev; for development, the engine workspace's working copies
   # are used instead, through the gitignored pubspec_overrides.yaml.
-  just_asset_store: ^0.2.0
+  just_asset_store: ^0.3.0
   just_unknown_site:
     path: ../just_unknown_site
   args: ^2.7.0

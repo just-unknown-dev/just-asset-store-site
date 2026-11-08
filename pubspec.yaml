@@ -20,7 +20,7 @@ dependencies:
     path: packages/just_asset_store_pages
   # Claim codes. From pub.dev; for development, the engine workspace's
   # working copy, through the gitignored pubspec_overrides.yaml.
-  just_asset_store: ^0.2.0
+  just_asset_store: ^0.3.0
   just_signals: ^1.0.2
   just_di: ^1.0.0
   just_storage: ^1.2.1

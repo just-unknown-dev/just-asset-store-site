@@ -454,7 +454,7 @@ final class StoreBackend {
     final out = <Outcome>[];
     for (final MapEntry(key: id, value: r) in reports.entries) {
       final itemId = '${r['itemId']}';
-      if (!StoreNames.isId(itemId)) {
+      if (!PackageNames.isId(itemId)) {
         await store.update('reports/$id', {'status': 'ignored'});
         continue;
       }

@@ -57,7 +57,7 @@ final class BackendConfig {
           json.optInt('maxArchiveBytes', min: 1) ?? defaultMaxArchiveBytes,
       featured: [
         for (final id in json.strings('featured'))
-          StoreNames.isId(id)
+          PackageNames.isId(id)
               ? id
               : throw json.error('featured', '"$id" is not an item id.'),
       ],

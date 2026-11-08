@@ -183,7 +183,7 @@ final class ReleaseCheck {
     final JustRelease file;
     try {
       file = JustRelease.parse(utf8.decode(fileBytes));
-    } on StoreFormatException catch (e) {
+    } on JsonFormatException catch (e) {
       return Refused('Its ${JustRelease.fileName} is not valid: $e');
     } on FormatException {
       return Refused('Its ${JustRelease.fileName} is not UTF-8 text.');
@@ -203,7 +203,7 @@ final class ReleaseCheck {
     }
 
     final manifest = file.manifest;
-    final idProblem = StoreNames.idProblem(manifest.id);
+    final idProblem = PackageNames.idProblem(manifest.id);
     if (idProblem != null) return Refused('`${manifest.id}`: $idProblem');
     if (config.isReserved(manifest.id) &&
         !config.officialPublishers.contains(claim.id)) {
@@ -225,7 +225,7 @@ final class ReleaseCheck {
     final StoreItem item;
     try {
       item = GitHubSource(repo.repo).indexFor(file).items.single;
-    } on StoreFormatException catch (e) {
+    } on JsonFormatException catch (e) {
       return Refused('Its ${JustRelease.fileName} is not valid: $e');
     }
     var version = item.versions.single;

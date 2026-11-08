@@ -270,7 +270,7 @@ packages:
       path: "../../JustGameEngineTemplates/just_platformer_template/packages/just_asset_store"
       relative: true
     source: path
-    version: "0.2.0"
+    version: "0.2.1"
   just_asset_store_pages:
     dependency: "direct main"
     description:

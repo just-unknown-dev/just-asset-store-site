@@ -83,9 +83,9 @@ final class SiteBuild {
     final StoreIndex index;
     try {
       index = (await FolderStoreSource(catalog.path).fetchIndex()).index;
-    } on StoreFormatException catch (e) {
+    } on JsonFormatException catch (e) {
       throw SiteBuildException('The catalog can\'t be read: $e');
-    } on SourceException catch (e) {
+    } on FetchException catch (e) {
       throw SiteBuildException('The catalog can\'t be read: $e');
     }
     _prepareOut();

@@ -10,8 +10,8 @@ environment:
 dependencies:
   # From pub.dev; for development, the engine workspace's working copies
   # are used instead, through the gitignored pubspec_overrides.yaml.
-  just_asset_store: ^0.2.0
-  just_core_cli: ^0.1.2
+  just_asset_store: ^0.3.0
+  just_core_cli: ^0.2.0
   # Card pictures (pure Dart).
   image: ^4.8.0
 
